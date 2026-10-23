@@ -1,6 +1,9 @@
 package es.unizar.webeng.lab3
 
 import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
+import io.mockk.justRun
+import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -12,6 +15,7 @@ import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
+import java.util.Optional
 
 private val MANAGER_REQUEST_BODY = { name: String ->
     """
@@ -55,7 +59,13 @@ class ControllerTests {
         // SETUP - COMPLETE ME!
         // Initial state: the collection is empty. No employee exists.
         // Runtime state: the first save stores Mary, Manager, as id 1. The second save stores Mary, Manager, as id 2.
-        TODO("Complete the mock setup for POST test")
+        every {
+            employeeRepository.save(any<Employee>())
+        } answers {
+            Employee("Mary", "Manager", 1)
+        } andThenAnswer {
+            Employee("Mary", "Manager", 2)
+        }
 
         mvc
             .post("/employees") {
@@ -88,7 +98,14 @@ class ControllerTests {
         // VERIFY - COMPLETE ME!
         // Hint: What repository methods should be called for a POST operation?
         // What methods should NOT be called? Think about the difference between safe and unsafe operations.
-        TODO("Complete the verification for POST test")
+        verify(exactly = 2) {
+            employeeRepository.save(Employee("Mary", "Manager", null))
+        }
+        verify(exactly = 0) {
+            employeeRepository.findById(any())
+            employeeRepository.findAll()
+            employeeRepository.deleteById(any())
+        }
     }
 
     @Test
@@ -96,7 +113,16 @@ class ControllerTests {
         // SETUP
         // Initial state: /employees/1 is Mary, Manager, id 1. /employees/2 has no representation.
         // Runtime state: both stay that way.
-        TODO("Complete the mock setup for GET test")
+        every {
+            employeeRepository.findById(1)
+        } answers {
+            Optional.of(Employee("Mary", "Manager", 1))
+        }
+        every {
+            employeeRepository.findById(2)
+        } answers {
+            Optional.empty()
+        }
 
         mvc.get("/employees/1").andExpect {
             status { isOk() }
@@ -125,7 +151,17 @@ class ControllerTests {
         // VERIFY - COMPLETE ME!
         // Hint: Since GET is safe, what repository methods should NOT be called?
         // Count how many times each method was called based on the test requests.
-        TODO("Complete the verification for GET test")
+        verify(exactly = 2) {
+            employeeRepository.findById(1)
+        }
+        verify(exactly = 2) {
+            employeeRepository.findById(2)
+        }
+        verify(exactly = 0) {
+            employeeRepository.save(any())
+            employeeRepository.deleteById(any())
+            employeeRepository.findAll()
+        }
     }
 
     @Test
@@ -133,7 +169,18 @@ class ControllerTests {
         // SETUP
         // Initial state: /employees/1 has no representation.
         // Runtime state: the first PUT stores Tom, Manager, at id 1. The second PUT leaves that same employee.
-        TODO("Complete the mock setup for PUT test")
+        every {
+            employeeRepository.findById(1)
+        } answers {
+            Optional.empty()
+        } andThenAnswer {
+            Optional.of(Employee("Tom", "Manager", 1))
+        }
+        every {
+            employeeRepository.save(any<Employee>())
+        } answers {
+            Employee("Tom", "Manager", 1)
+        }
 
         mvc
             .put("/employees/1") {
@@ -166,7 +213,13 @@ class ControllerTests {
         // VERIFY - COMPLETE ME!
         // Hint: What repository methods should be called for PUT operations?
         // Think about the controller logic and how many times each method should be invoked.
-        TODO("Complete the verification for PUT test")
+        verify(exactly = 2) {
+            employeeRepository.save(Employee("Tom", "Manager", 1))
+        }
+        verify(exactly = 0) {
+            employeeRepository.deleteById(any())
+            employeeRepository.findAll()
+        }
     }
 
     @Test
@@ -174,7 +227,9 @@ class ControllerTests {
         // SETUP
         // Initial state: /employees/1 is associated with an employee.
         // Runtime state: the first DELETE removes that association. The second DELETE finds it already gone.
-        TODO("Complete the mock setup for DELETE test")
+        justRun {
+            employeeRepository.deleteById(1)
+        }
         mvc.delete("/employees/1").andExpect {
             status { isNoContent() }
         }
@@ -186,7 +241,14 @@ class ControllerTests {
         // VERIFY
         // Hint: What repository methods should be called for DELETE operations?
         // What methods should NOT be called? Think about the nature of DELETE operations.
-        TODO("Complete the verification for DELETE test")
+        verify(exactly = 2) {
+            employeeRepository.deleteById(1)
+        }
+        verify(exactly = 0) {
+            employeeRepository.save(any())
+            employeeRepository.findById(any())
+            employeeRepository.findAll()
+        }
     }
 
     @Test
@@ -194,7 +256,11 @@ class ControllerTests {
         // SETUP - COMPLETE ME!
         // Initial state: the collection contains exactly Mary, Manager, id 1.
         // Runtime state: the second GET sees that same list.
-        TODO("Complete the mock setup for the collection GET")
+        every {
+            employeeRepository.findAll()
+        } answers {
+            listOf(Employee("Mary", "Manager", 1))
+        }
 
         mvc.get("/employees").andExpect {
             status { isOk() }
@@ -214,6 +280,13 @@ class ControllerTests {
 
         // VERIFY - COMPLETE ME!
         // Hint: Count the list calls. A safe list must not save, delete, or fetch one id.
-        TODO("Complete the verification for the collection GET")
+        verify(exactly = 2) {
+            employeeRepository.findAll()
+        }
+        verify(exactly = 0) {
+            employeeRepository.save(any())
+            employeeRepository.deleteById(any())
+            employeeRepository.findById(any())
+        }
     }
 }
