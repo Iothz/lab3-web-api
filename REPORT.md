@@ -19,18 +19,17 @@ The semantic properties of each endpoint are:
   - Safety: Safe (retrieves a list of employees without modifying it)
   - Idempotency: Idempotent (multiple calls return the same list of employees)
 
-Pass criteria
-    - Every test must pass the `./gradlew test` command with exact Mockk verification of interaction counts and no calls to forbidden methods.
+### Pass criteria
+
+- Every test must pass when running `./gradlew test`, with exact MockK verification of interaction counts and no calls to forbidden methods.
 ## What I changed
 
-Edited the following files:
-- `src/test/kotlin/es/unizar/webeng/lab3/ControllerTest.kt`
-  - Replaced all TODO's with the blocks proposed.
+Edited the following file:
+- `src/test/kotlin/es/unizar/webeng/lab3/ControllerTests.kt`
+  - Replaced all TODOs with the proposed blocks.
   - Added required imports: `io.mockk.every`, `io.mockk.justRun`,`io.mockk.verify` and `java.util.Optional`.
 
 ## Technical decisions
-
-[Choices you own: which MockK block you used for each method, what you rejected, and why a repeated call does or does not change state.]
 
 The following table shows the blocks used in `ControllerTests.kt`:
 
@@ -44,21 +43,21 @@ The following table shows the blocks used in `ControllerTests.kt`:
 | **6.** `Setup: deleteById may be called` (`justRun`) | Setup | Test 4: `DELETE is idempotent but not safe` |
 | **7.** `Setup: findAll returns one employee` | Setup | Test 5: `GET collection is safe and idempotent` |
 | **8.** `Verify: both saves discard the client id` + `no read or delete` | Verify | Test 1: `POST is not safe and not idempotent` |
-| **9.** `Verify: findById(1)` y `(2)` twice + `no modifying methods` | Verify | Test 2: `GET is safe and idempotent` |
+| **9.** `Verify: findById(1)` and `findById(2)` twice + `no modifying methods` | Verify | Test 2: `GET is safe and idempotent` |
 | **10.** `Verify: both saves store the same employee` + `no delete or list` | Verify | Test 3: `PUT is idempotent but not safe` |
 | **11.** `Verify: deleteById was called twice, and nothing else` | Verify | Test 4: `DELETE is idempotent but not safe` |
 | **12.** `Verify: findAll was called twice` + `no write or read one id` | Verify | Test 5: `GET collection is safe and idempotent` |
 
 Explanation of different technical decisions:
-- In verify for POST, specific arguments (e.g., `Employee("Mary", "Manager", null)`) are used instead of generics like `any()`, to verify that the controller wipes the ID's provided by the client.
-- To model state transition for `PUT` and `POST` chained answers with `answers{...}` and `andThenAnswer{...}` are used, to simulate the behavior of the repository returning different results on subsequent calls.
-- For `DELETE`, `justRun` is used to indicate that the method can be called without returning a value, using `every {...} return Unit` would have the same effect but is less idiomatic.
+- In the `verify` command for POST, specific arguments (e.g., `Employee("Mary", "Manager", null)`) are used instead of generic matchers such as `any()`, to verify that the controller removes the IDs provided by the client.
+- To model the state transition for `PUT` and `POST`, chained answers using `answers { ... }` and `andThenAnswer { ... }` are used to simulate the repository returning different results on subsequent calls.
+- For `DELETE`, `justRun` is used to indicate that the method can be called without returning a value. Using `every { ... } returns Unit` would have the same effect but is less idiomatic.
 
 ## How I verified
 
-Ran `./gradlew check` after every test implementation with the following tests failing with expected `NotImplementedError` on `TODO`
+Ran `./gradlew check` after implementing each test. The tests failed with the expected `NotImplementedError` while the TODOs remained.
 
-After implementing all tests, `ktlintTestSourceSetCheck` failed due to import ordering (java.util.Optional was not placed at the end). Ran `./gradlew ktlintFormat`, adjusted imports, and re-ran `./gradlew check` resulting in BUILD SUCCESSFUL (all 5 unit tests passed and all Ktlint tasks succeeded).
+After implementing all tests, `ktlintTestSourceSetCheck` failed due to import ordering (`java.util.Optional` was not placed at the end). I ran `./gradlew ktlintFormat`, adjusted the imports, and re-ran `./gradlew check`, resulting in `BUILD SUCCESSFUL` (all five unit tests passed and all Ktlint tasks succeeded).
 
 
 ## AI disclosure
